@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Quiz Result - Trail</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center select-none bg-gray-100 min-h-screen">
+  <div class="max-w-3xl mx-auto mt-12 p-6 bg-white rounded shadow">
+    <h1 class="text-3xl font-bold text-blue-600 mb-6 text-center">Your Quiz Result</h1>
+
+    <div id="resultContainer" class="space-y-4 text-center"></div>
+
+    <button onclick="returnToHome()" class="mt-6 bg-blue-600 text-white py-2 px-6 rounded hover:bg-blue-700">
+      Return to Home
+    </button>
+  </div>
+
+  <script>
+    function displayResult() {
+      const score = localStorage.getItem("quizScore");
+      const quizLength = JSON.parse(localStorage.getItem("quizQuestions") || "[]").length;
+
+      const resultContainer = document.getElementById("resultContainer");
+      resultContainer.innerHTML = `
+        <p class="text-2xl font-semibold">You scored ${score} out of ${quizLength}</p>
+        <p class="text-gray-600">Great job! You can go back and try again or return to the home page.</p>
+      `;
+    }
+
+    function returnToHome() {
+      localStorage.removeItem("quizCompleted");  // Allow retrying
+      window.location.href = "dashboard.html";  // Or any home page
+    }
+
+    displayResult();
+  </script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-app.js";
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCiRqI9iOiMHEIV4TvRE5eefrEEPN9VOr8",
+    authDomain: "quiz-l.firebaseapp.com",
+    projectId: "quiz-l",
+    storageBucket: "quiz-l.appspot.com",
+    messagingSenderId: "802847095677",
+    appId: "1:802847095677:web:ac1ada624023792c58ea14"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // We'll use `db` in login.js for checking reg numbers
+  window.firebaseDB = db;
+</script>
+</body>
+</html>

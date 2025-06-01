@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Dashboard - Trail</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    .card-hover:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-hover {
+      transition: all 0.3s ease;
+    }
+
+    .admin-card {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    }
+
+    .pulse-animation {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+      }
+
+      70% {
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+  <!-- Header -->
+  <header class="bg-white shadow-md p-4 flex justify-between items-center">
+    <div class="flex items-center">
+      <i class="fas fa-user-shield text-red-600 text-xl mr-2"></i>
+      <h1 class="text-xl font-bold text-red-600">Admin Dashboard</h1>
+    </div>
+    <button onclick="logoutAdmin()"
+      class="text-sm bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded flex items-center transition">
+      <i class="fas fa-sign-out-alt mr-2"></i> Logout
+    </button>
+  </header>
+
+  <!-- Main -->
+  <main class="p-6">
+    <div class="max-w-4xl mx-auto">
+      <div class="bg-white rounded-xl shadow-sm p-6 mb-6 admin-card">
+        <h2 class="text-xl font-semibold mb-4 text-gray-800 flex items-center">
+          <i class="fas fa-tachometer-alt mr-2 text-red-500"></i> Admin Controls
+        </h2>
+        <p class="text-gray-600 mb-6">Manage all aspects of the quiz system from this dashboard</p>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <a href="create-quiz.html"
+            class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm flex flex-col items-center text-center card-hover hover:border-red-200 hover:bg-red-50 transition">
+            <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-3">
+              <i class="fas fa-edit text-red-600 text-xl"></i>
+            </div>
+            <h3 class="font-medium text-gray-800 mb-1">Create/Edit Quiz</h3>
+            <p class="text-sm text-gray-500">Add or modify quiz questions and settings</p>
+          </a>
+
+          <a href="view-result.html"
+            class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm flex flex-col items-center text-center card-hover hover:border-green-200 hover:bg-green-50 transition">
+            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3">
+              <i class="fas fa-chart-bar text-green-600 text-xl"></i>
+            </div>
+            <h3 class="font-medium text-gray-800 mb-1">View Results</h3>
+            <p class="text-sm text-gray-500">See all student results and download data</p>
+          </a>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm p-6 admin-card">
+        <h2 class="text-xl font-semibold mb-4 text-gray-800 flex items-center">
+          <i class="fas fa-info-circle mr-2 text-blue-500"></i> System Status
+        </h2>
+
+        <div class="grid md:grid-cols-3 gap-4">
+          <div class="p-4 bg-blue-50 rounded-lg">
+            <div class="flex items-center">
+              <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                <i class="fas fa-question-circle text-blue-600"></i>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">Questions</p>
+                <h3 class="font-bold text-lg" id="questionCount">Loading...</h3>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-4 bg-green-50 rounded-lg">
+            <div class="flex items-center">
+              <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                <i class="fas fa-users text-green-600"></i>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">Participants</p>
+                <h3 class="font-bold text-lg" id="participantCount">Loading...</h3>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-4 bg-purple-50 rounded-lg">
+            <div class="flex items-center">
+              <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-3">
+                <i class="fas fa-check-circle text-purple-600"></i>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">Completed</p>
+                <h3 class="font-bold text-lg" id="completedCount">Loading...</h3>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Add Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    // Initialize Firebase with your config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCB3oLoV2YyX0Io16Ep2rxxbs38W1tIxRo",
+      authDomain: "trailquizz.firebaseapp.com",
+      projectId: "trailquizz",
+      storageBucket: "trailquizz.appspot.com",
+      messagingSenderId: "1016471794742",
+      appId: "1:1016471794742:web:4214c5184b90113a7d9497"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Check admin status
+    if (localStorage.getItem("isAdmin") !== "true") {
+      alert("Access denied. Please login as admin.");
+      window.location.href = "admin-login.html";
+    }
+
+    // Load stats from Firebase
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        // Fetch questions (keep your existing backend call or update if needed)
+        fetch('https://backbone-1.onrender.com/api/quiz')
+          .then(res => res.json())
+          .then(questions => {
+            document.getElementById('questionCount').textContent = questions.length;
+          })
+          .catch(err => {
+            console.error("Failed to fetch questions:", err);
+            document.getElementById('questionCount').textContent = "Error";
+          });
+
+        // Fetch results from Firebase
+        const school = "EBSU";
+        const year = "2023";
+
+        const resultsSnapshot = await db
+          .collection("Results")
+          .doc(school)
+          .collection(year)
+          .get();
+
+        const totalParticipants = resultsSnapshot.size;
+        const completedParticipants = resultsSnapshot.docs.filter(doc => {
+          const data = doc.data();
+          return typeof data.score !== 'undefined' && typeof data.total !== 'undefined';
+        }).length;
+
+        document.getElementById('participantCount').textContent = totalParticipants;
+        document.getElementById('completedCount').textContent = completedParticipants;
+
+      } catch (error) {
+        console.error("Error fetching results from Firebase:", error);
+        document.getElementById('participantCount').textContent = "Error";
+        document.getElementById('completedCount').textContent = "Error";
+      }
+    });
+
+    // Logout admin
+    function logoutAdmin() {
+      localStorage.removeItem("isAdmin");
+      window.location.href = "admin-login.html";
+    }
+  </script>
+</body>
+
+</html>

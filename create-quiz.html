@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Quiz - Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .tab-active {
+      border-bottom: 3px solid #3B82F6;
+      color: #3B82F6;
+      font-weight: 600;
+    }
+
+    .question-card {
+      transition: all 0.3s ease;
+    }
+
+    .question-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .correct-option .option-dot {
+      background-color: #10B981;
+    }
+
+    .shake {
+      animation: shake 0.5s;
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      20%,
+      60% {
+        transform: translateX(-5px);
+      }
+
+      40%,
+      80% {
+        transform: translateX(5px);
+      }
+    }
+
+    .slide-fade-enter-active {
+      transition: all 0.3s ease;
+    }
+
+    .slide-fade-leave-active {
+      transition: all 0.3s cubic-bezier(1, 0.5, 0.8, 1);
+    }
+
+    .slide-fade-enter-from,
+    .slide-fade-leave-to {
+      transform: translateX(10px);
+      opacity: 0;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+  <!-- Header -->
+  <header class="bg-white shadow-md p-4 flex justify-between items-center">
+    <h1 class="text-xl font-bold text-blue-600 flex items-center">
+      <i class="fas fa-cogs mr-2"></i> Quiz Settings
+    </h1>
+    <button onclick="location.href='admin-dashboard.html'"
+      class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded flex items-center">
+      <i class="fas fa-arrow-left mr-2"></i> Back
+    </button>
+  </header>
+
+  <!-- Main Content -->
+  <main class="p-4 max-w-6xl mx-auto">
+    <!-- Tabs -->
+    <div class="flex border-b border-gray-200 mb-6">
+      <button id="settingsTab" class="px-4 py-2 font-medium text-gray-600 tab-active flex items-center">
+        <i class="fas fa-sliders-h mr-2"></i> Quiz Settings
+      </button>
+      <button id="questionsTab" class="px-4 py-2 font-medium text-gray-600 flex items-center">
+        <i class="fas fa-question-circle mr-2"></i> Manage Questions
+      </button>
+    </div>
+
+    <!-- Settings Tab Content -->
+    <div id="settingsContent" class="bg-white rounded-xl shadow-sm p-6 mb-6">
+      <h2 class="text-lg font-semibold mb-4 text-gray-800 flex items-center">
+        <i class="fas fa-cog mr-2 text-blue-500"></i> General Settings
+      </h2>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Quiz Timer (minutes)</label>
+          <input id="quizTimer" type="number" min="1" max="60" value="5"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Number of Questions to Show</label>
+          <input id="questionsToShow" type="number" min="1" value="10"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400">
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <button onclick="saveSettings()"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center">
+          <i class="fas fa-save mr-2"></i> Save Settings
+        </button>
+      </div>
+    </div>
+
+    <!-- Questions Tab Content -->
+    <div id="questionsContent" class="hidden">
+      <!-- Add New Question -->
+      <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <h2 class="text-lg font-semibold mb-4 text-gray-800 flex items-center">
+          <i class="fas fa-plus-circle mr-2 text-blue-500"></i> Add New Question
+        </h2>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Question</label>
+            <input id="questionInput" type="text" placeholder="Enter the question"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400">
+          </div>
+
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Options</label>
+            <div class="flex items-center">
+              <span class="option-dot bg-blue-500 mr-2"></span>
+              <input type="text" placeholder="Option 1"
+                class="optionInput w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400">
+            </div>
+            <div class="flex items-center">
+              <span class="option-dot bg-blue-500 mr-2"></span>
+              <input type="text" placeholder="Option 2"
+                class="optionInput w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400">
+            </div>
+            <div class="flex items-center">
+              <span class="option-dot bg-blue-500 mr-2"></span>
+              <input type="text" placeholder="Option 3"
+                class="optionInput w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400">
+            </div>
+            <div class="flex items-center">
+              <span class="option-dot bg-blue-500 mr-2"></span>
+              <input type="text" placeholder="Option 4"
+                class="optionInput w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Correct Answer</label>
+            <select id="correctAnswer"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400">
+              <option value="">Select correct option</option>
+              <option value="0">Option 1</option>
+              <option value="1">Option 2</option>
+              <option value="2">Option 3</option>
+              <option value="3">Option 4</option>
+            </select>
+          </div>
+
+          <div id="message" class="hidden py-2 px-4 rounded-lg text-sm"></div>
+
+          <button id="submitBtn" onclick="submitQuestion()"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition flex items-center justify-center">
+            <i class="fas fa-save mr-2"></i> Save Question
+          </button>
+        </div>
+      </div>
+
+      <!-- Existing Questions -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h2 class="text-lg font-semibold mb-4 text-gray-800 flex items-center">
+          <i class="fas fa-list-ul mr-2 text-blue-500"></i> Existing Questions
+        </h2>
+
+        <div id="questionsList" class="space-y-3">
+          <!-- Questions will be loaded here -->
+          <div class="text-center py-4 text-gray-500">
+            <i class="fas fa-spinner fa-spin mr-2"></i> Loading questions...
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="create-quiz.js"></script>
+  <script>
+    // Tab switching
+    document.getElementById('settingsTab').addEventListener('click', () => {
+      document.getElementById('settingsTab').classList.add('tab-active');
+      document.getElementById('questionsTab').classList.remove('tab-active');
+      document.getElementById('settingsContent').classList.remove('hidden');
+      document.getElementById('questionsContent').classList.add('hidden');
+    });
+
+    document.getElementById('questionsTab').addEventListener('click', () => {
+      document.getElementById('questionsTab').classList.add('tab-active');
+      document.getElementById('settingsTab').classList.remove('tab-active');
+      document.getElementById('questionsContent').classList.remove('hidden');
+      document.getElementById('settingsContent').classList.add('hidden');
+      loadQuestions();
+    });
+
+    // Load quiz settings
+    async function loadSettings() {
+      try {
+        const response = await fetch('https://backbone-1.onrender.com/api/quiz-settings');
+        if (response.ok) {
+          const settings = await response.json();
+          document.getElementById('quizTimer').value = settings.timer || 5;
+          document.getElementById('questionsToShow').value = settings.questionsToShow || 10;
+        }
+      } catch (error) {
+        console.error('Error loading settings:', error);
+      }
+    }
+
+    // Save quiz settings
+    async function saveSettings() {
+      const timer = document.getElementById('quizTimer').value;
+      const questionsToShow = document.getElementById('questionsToShow').value;
+
+      try {
+        const response = await fetch('https://backbone-1.onrender.com/api/quiz-settings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ timer, questionsToShow })
+        });
+
+        if (response.ok) {
+          showMessage('Settings saved successfully!', 'success');
+        } else {
+          throw new Error('Failed to save settings');
+        }
+      } catch (error) {
+        showMessage(error.message || 'Error saving settings', 'error');
+      }
+    }
+
+    // Show message
+    function showMessage(message, type) {
+      const messageDiv = document.getElementById('message');
+      messageDiv.textContent = message;
+      messageDiv.className = `py-2 px-4 rounded-lg text-sm ${type === 'success'
+        ? 'bg-green-100 text-green-700'
+        : 'bg-red-100 text-red-700'}`;
+      messageDiv.classList.remove('hidden');
+
+      setTimeout(() => {
+        messageDiv.classList.add('hidden');
+      }, 3000);
+    }
+
+    // Reset form
+    function resetForm() {
+      document.getElementById('questionInput').value = '';
+      document.querySelectorAll('.optionInput').forEach(input => input.value = '');
+      document.getElementById('correctAnswer').value = '';
+    }
+
+    // Load existing questions
+    async function loadQuestions() {
+      const questionsList = document.getElementById('questionsList');
+      questionsList.innerHTML = '<div class="text-center py-4 text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i> Loading questions...</div>';
+
+      try {
+        const response = await fetch('https://backbone-1.onrender.com/api/quiz');
+        if (!response.ok) throw new Error('Failed to load questions');
+
+        const questions = await response.json();
+
+        if (questions.length === 0) {
+          questionsList.innerHTML = '<div class="text-center py-4 text-gray-500">No questions found. Add your first question above.</div>';
+          return;
+        }
+
+        questionsList.innerHTML = '';
+        questions.forEach((q, index) => {
+          const questionCard = document.createElement('div');
+          questionCard.className = 'bg-white border border-gray-200 rounded-lg p-4 question-card';
+
+          // Create options list with correct answer highlighted
+          let optionsHtml = '';
+          q.options.forEach((opt, i) => {
+            const isCorrect = i === q.correctAnswer;
+            optionsHtml += `
+              <div class="flex items-center ${isCorrect ? 'correct-option' : ''}">
+                <span class="option-dot mr-2"></span>
+                <span>${opt}</span>
+              </div>
+            `;
+          });
+
+          questionCard.innerHTML = `
+            <div class="flex justify-between items-start">
+              <div class="flex-1">
+                <h3 class="font-medium text-gray-800">Q${index + 1}: ${q.question}</h3>
+                <div class="mt-2 space-y-1">
+                  ${optionsHtml}
+                </div>
+              </div>
+              <div class="flex space-x-2">
+                <button onclick="editQuestion('${q.id}')" class="text-blue-600 hover:text-blue-800 p-1">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button onclick="deleteQuestion('${q.id}')" class="text-red-600 hover:text-red-800 p-1">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+            </div>
+          `;
+          questionsList.appendChild(questionCard);
+        });
+      } catch (error) {
+        questionsList.innerHTML = `
+          <div class="text-center py-4 text-red-500">
+            <i class="fas fa-exclamation-triangle mr-2"></i> Error loading questions: ${error.message}
+          </div>
+        `;
+      }
+    }
+
+    // Edit question
+    async function editQuestion(questionId) {
+      try {
+        const response = await fetch(`https://backbone-1.onrender.com/api/quiz/${questionId}`);
+        if (!response.ok) throw new Error('Failed to fetch question');
+
+        const question = await response.json();
+
+        // Populate form with question data
+        document.getElementById('questionInput').value = question.question;
+        const optionInputs = document.querySelectorAll('.optionInput');
+        question.options.forEach((opt, i) => {
+          if (optionInputs[i]) optionInputs[i].value = opt;
+        });
+        document.getElementById('correctAnswer').value = question.correctAnswer;
+
+        // Change button to update mode
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i> Update Question';
+        submitBtn.onclick = function () { updateQuestion(questionId); };
+
+        // Scroll to form
+        document.getElementById('questionsTab').click();
+        document.getElementById('questionInput').focus();
+
+      } catch (error) {
+        showMessage(`Error loading question: ${error.message}`, 'error');
+      }
+    }
+
+    // Update question
+    async function updateQuestion(questionId) {
+      const submitBtn = document.getElementById('submitBtn');
+      const originalBtnText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Updating...';
+      submitBtn.disabled = true;
+
+      try {
+        const question = document.getElementById('questionInput').value.trim();
+        const options = Array.from(document.querySelectorAll('.optionInput')).map(input => input.value.trim());
+        const correctAnswer = document.getElementById('correctAnswer').value;
+
+        const response = await fetch(`https://backbone-1.onrender.com/api/quiz/${questionId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            question,
+            options,
+            correctAnswer: parseInt(correctAnswer)
+          })
+        });
+
+        if (!response.ok) throw new Error('Failed to update question');
+
+        showMessage('Question updated successfully!', 'success');
+        resetForm();
+        loadQuestions();
+
+        // Reset button to add mode
+        submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Save Question';
+        submitBtn.onclick = function () { submitQuestion(); };
+
+      } catch (error) {
+        showMessage(`Error updating question: ${error.message}`, 'error');
+      } finally {
+        submitBtn.disabled = false;
+      }
+    }
+
+    // Delete question
+    async function deleteQuestion(questionId) {
+      if (!confirm('Are you sure you want to delete this question?')) return;
+
+      try {
+        const response = await fetch(`https://backbone-1.onrender.com/api/quiz/${questionId}`, {
+          method: 'DELETE'
+        });
+
+        if (!response.ok) throw new Error('Failed to delete question');
+
+        showMessage('Question deleted successfully!', 'success');
+        loadQuestions();
+      } catch (error) {
+        showMessage(`Error deleting question: ${error.message}`, 'error');
+      }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', loadSettings);
+
+  </script>
+</body>
+
+</html>
