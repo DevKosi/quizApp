@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     let currentIndex = 0;
     const answers = new Array(quizData.length).fill(null);
-    let timeLeft = 120; // 5 minutes in seconds
+    let timeLeft = 480; // 5 minutes in seconds
     let timerInterval;
 
     // Inject progress bar
