@@ -31,17 +31,31 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // Get number of questions to show from settings
-    const settingsResponse = await fetch("https://backbone-1.onrender.com/api/quiz-settings");
-    if (settingsResponse.ok) {
-      const settings = await settingsResponse.json();
-      const questionsToShow = Math.min(settings.questionsToShow || 10, quizData.length);
-      quizData = quizData.slice(0, questionsToShow);
-    }
+    //const settingsResponse = await fetch("https://backbone-1.onrender.com/api/quiz-settings");
+    //if (settingsResponse.ok) {
+     // const settings = await settingsResponse.json();
+    //  const questionsToShow = Math.min(settings.questionsToShow || 10, quizData.length);
+   //   quizData = quizData.slice(0, questionsToShow);
+   // }
 
-    let currentIndex = 0;
-    const answers = new Array(quizData.length).fill(null);
-    let timeLeft = 480; // 5 minutes in seconds
-    let timerInterval;
+  
+// Hardcoded number of questions to show
+const questionsToShow = 15; // Or any other number
+
+// Shuffle quizData
+function shuffleArray(array) {
+  return array
+    .map(value => ({ value, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ value }) => value);
+}
+
+quizData = shuffleArray(quizData).slice(0, Math.min(questionsToShow, quizData.length));
+
+let currentIndex = 0;
+const answers = new Array(quizData.length).fill(null);
+let timeLeft = 480; //
+let timerInterval;
 
     // Inject progress bar
     const progressBar = document.createElement("div");
