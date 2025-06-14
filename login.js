@@ -10,7 +10,7 @@ async function login() {
   loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Authenticating...';
   loginBtn.disabled = true;
 
-  const response = await fetch('https://backbone-skry.onrender.com/api/login', {
+  const response = await fetch('https://backbone-1.onrender.com/api/login', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
