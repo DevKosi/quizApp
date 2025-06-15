@@ -20,18 +20,11 @@
       transition: all 0.2s ease;
     }
 
-    .highlight {
-      animation: highlight 2s;
-    }
-
-    @keyframes highlight {
-      0% {
-        background-color: rgba(16, 185, 129, 0.3);
-      }
-
-      100% {
-        background-color: transparent;
-      }
+    .progress-bar {
+      height: 4px;
+      background-color: #3b82f6;
+      width: 0%;
+      transition: width 0.3s ease;
     }
   </style>
 </head>
@@ -40,9 +33,9 @@
   <div class="w-full max-w-6xl mx-auto bg-white shadow-md rounded-xl p-6 mt-10 mb-10">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold text-gray-800 flex items-center">
-        <i class="fas fa-chart-bar mr-2 text-blue-500"></i> Quiz Results
+        <i class="fas fa-chart-bar mr-2 text-blue-500"></i> Quiz Results (All Years)
       </h1>
-      <div class="flex items-center space-x-2">
+      <div class="flex items-center space-x-4">
         <button onclick="location.href='admin-dashboard.html'"
           class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg flex items-center btn-hover">
           <i class="fas fa-arrow-left mr-2"></i> Back
@@ -52,6 +45,15 @@
           <i class="fas fa-download mr-2"></i> Download & Clear
         </button>
       </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div id="progressContainer" class="hidden mb-2">
+      <div class="flex justify-between text-sm text-gray-600 mb-1">
+        <span id="progressText">Processing...</span>
+        <span id="progressPercent">0%</span>
+      </div>
+      <div class="progress-bar rounded-full"></div>
     </div>
 
     <div class="overflow-x-auto rounded-lg border border-gray-200">
@@ -64,17 +66,30 @@
             <th class="px-4 py-3">Score</th>
             <th class="px-4 py-3">Total</th>
             <th class="px-4 py-3">Percentage</th>
+            <th class="px-4 py-3">Year</th>
             <th class="px-4 py-3">Timestamp</th>
           </tr>
         </thead>
         <tbody id="resultsTable" class="divide-y divide-gray-100">
           <tr>
-            <td colspan="6" class="text-center py-4 text-gray-500">
+            <td colspan="8" class="text-center py-4 text-gray-500">
               <i class="fas fa-spinner fa-spin mr-2"></i> Loading results...
             </td>
           </tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full">
+      <h3 class="text-lg font-bold mb-4">Confirm Clear Results</h3>
+      <p class="mb-6">Are you sure you want to clear all results? This action cannot be undone.</p>
+      <div class="flex justify-end space-x-3">
+        <button id="cancelClear" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100">Cancel</button>
+        <button id="confirmClear" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Clear All</button>
+      </div>
     </div>
   </div>
 
@@ -94,68 +109,28 @@
 
     const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-
     const school = "EBSU";
-    const year = "2024";
-    let lastVisible = null;
-    let isLoading = false;
-    let isEndReached = false;
-    const pageSize = 10;
+    const availableYears = ["2017", "2018", "2019", "2020", "2021", "2023", "2023", "2024", "2025"]; // Add all years you have
+    let allResults = [];
 
-    async function loadResults(initial = false) {
-      if (isLoading || isEndReached) return;
+    // UI Elements
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.querySelector('.progress-bar');
+    const progressText = document.getElementById('progressText');
+    const progressPercent = document.getElementById('progressPercent');
+    const confirmModal = document.getElementById('confirmModal');
+    const cancelClear = document.getElementById('cancelClear');
+    const confirmClear = document.getElementById('confirmClear');
 
-      isLoading = true;
-      const tableBody = document.getElementById('resultsTable');
-      if (initial) tableBody.innerHTML = '';
+    function updateProgress(percent, text) {
+      progressContainer.classList.remove('hidden');
+      progressBar.style.width = `${percent}%`;
+      progressPercent.textContent = `${percent}%`;
+      progressText.textContent = text || 'Processing...';
+    }
 
-      try {
-        let query = db.collection("Results").doc(school).collection(year)
-          .orderBy("timestamp", "desc")
-          .limit(pageSize);
-
-        if (lastVisible) {
-          query = query.startAfter(lastVisible);
-        }
-
-        const snapshot = await query.get();
-
-        if (snapshot.empty) {
-          if (initial) {
-            tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">No results found.</td></tr>';
-          }
-          isEndReached = true;
-          return;
-        }
-
-        lastVisible = snapshot.docs[snapshot.docs.length - 1];
-
-        snapshot.forEach((doc, index) => {
-          const data = doc.data();
-          const timestamp = data.timestamp?.toDate?.() || new Date(data.timestamp || Date.now());
-          const percentage = Math.round((data.score / data.total) * 100);
-
-          const row = document.createElement('tr');
-          row.className = 'table-row';
-          row.innerHTML = `
-          
-  
-         <td class="px-4 py-2">${data.fullName || 'N/A'}</td>
-          <td class="px-4 py-2 font-medium">${data.regNumber || 'N/A'}</td>
-  <td class="px-4 py-2">${data.department || 'N/A'}</td>
-  <td class="px-4 py-2 font-medium">${data.score}</td>
-  <td class="px-4 py-2">${data.total}</td>
-  <td class="px-4 py-2 font-medium ${getPercentageColor(percentage)}">${percentage}%</td>
-  <td class="px-4 py-2">${timestamp.toLocaleString()}</td>
-          `;
-          tableBody.appendChild(row);
-        });
-
-      } catch (err) {
-        console.error("Error loading results:", err);
-      } finally {
-        isLoading = false;
-      }
+    function hideProgress() {
+      progressContainer.classList.add('hidden');
     }
 
     function getPercentageColor(percentage) {
@@ -164,58 +139,196 @@
       return 'text-red-600';
     }
 
-    function setupInfiniteScroll() {
-      window.addEventListener('scroll', () => {
-        if (
-          window.innerHeight + window.scrollY >= document.body.offsetHeight - 500 &&
-          !isLoading && !isEndReached
-        ) {
-          loadResults(false);
+    async function loadAllResults() {
+      try {
+        const tableBody = document.getElementById('resultsTable');
+        tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i> Loading results...</td></tr>';
+
+        allResults = [];
+        updateProgress(0, 'Loading results...');
+
+        // Fetch results from each known year
+        for (let i = 0; i < availableYears.length; i++) {
+          const year = availableYears[i];
+          updateProgress(Math.round((i / availableYears.length) * 50), `Loading ${year} results...`);
+
+          const snapshot = await db.collection("Results")
+            .doc(school)
+            .collection(year)
+            .orderBy("timestamp", "desc")
+            .get();
+
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            allResults.push({
+              ...data,
+              year: year,
+              id: doc.id,
+              ref: doc.ref
+            });
+          });
         }
-      });
+
+        // Sort all results by timestamp (newest first)
+        updateProgress(75, 'Processing results...');
+        allResults.sort((a, b) => {
+          const timeA = a.timestamp?.toDate?.() || new Date(a.timestamp || 0);
+          const timeB = b.timestamp?.toDate?.() || new Date(b.timestamp || 0);
+          return timeB - timeA;
+        });
+
+        // Display results
+        updateProgress(90, 'Displaying results...');
+        if (allResults.length === 0) {
+          tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-gray-500">No results found.</td></tr>';
+          hideProgress();
+          return;
+        }
+
+        tableBody.innerHTML = '';
+        allResults.forEach(data => {
+          const timestamp = data.timestamp?.toDate?.() || new Date(data.timestamp || Date.now());
+          const percentage = Math.round((data.score / data.total) * 100);
+
+          const row = document.createElement('tr');
+          row.className = 'table-row';
+          row.innerHTML = `
+            <td class="px-4 py-2">${data.fullName || 'N/A'}</td>
+            <td class="px-4 py-2 font-medium">${data.regNumber || 'N/A'}</td>
+            <td class="px-4 py-2">${data.department || 'N/A'}</td>
+            <td class="px-4 py-2 font-medium">${data.score}</td>
+            <td class="px-4 py-2">${data.total}</td>
+            <td class="px-4 py-2 font-medium ${getPercentageColor(percentage)}">${percentage}%</td>
+            <td class="px-4 py-2">${data.year}</td>
+            <td class="px-4 py-2">${timestamp.toLocaleString()}</td>
+          `;
+          tableBody.appendChild(row);
+        });
+
+        updateProgress(100, 'Done!');
+        setTimeout(hideProgress, 1000);
+
+      } catch (err) {
+        console.error("Error loading results:", err);
+        const tableBody = document.getElementById('resultsTable');
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="8" class="text-center py-4 text-red-500">
+              Error loading results: ${err.message}
+              <br><br>
+              <button onclick="loadAllResults()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                <i class="fas fa-sync-alt mr-2"></i> Try Again
+              </button>
+            </td>
+          </tr>
+        `;
+        hideProgress();
+      }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      loadResults(true);         // load first batch
-      setupInfiniteScroll();     // enable infinite scroll
+    function downloadCSV() {
+      try {
+        updateProgress(0, 'Preparing download...');
 
-      document.getElementById('downloadClearBtn').addEventListener('click', async () => {
-        try {
-          const snapshot = await db.collection("Results").doc(school).collection(year).get();
+        // Prepare CSV data
+        const headers = ["Name", "Reg Number", "Department", "Score", "Total", "Percentage", "Year", "Timestamp"];
+        const rows = [headers];
 
-          if (snapshot.empty) return alert("No results to download.");
+        updateProgress(10, 'Processing data...');
 
-          const rows = [["Name", "Reg Number", "Department", "Score", "Total", "Percentage", "Timestamp"]];
-          snapshot.forEach(doc => {
-            const d = doc.data();
-            const perc = Math.round((d.score / d.total) * 100);
-            const time = d.timestamp?.toDate?.() || new Date(d.timestamp || Date.now());
-            rows.push([d.fullName, d.regNumber || 'N/A', d.department, d.score, d.total, `${perc}%`, time.toLocaleString()]);
-          });
+        allResults.forEach((result, index) => {
+          const timestamp = result.timestamp?.toDate?.() || new Date(result.timestamp || Date.now());
+          const percentage = Math.round((result.score / result.total) * 100);
 
-          const csv = rows.map(r => r.join(",")).join("\n");
-          const blob = new Blob([csv], { type: "text/csv" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `quiz-results-${school}-${year}.csv`;
-          a.click();
-          URL.revokeObjectURL(url);
+          rows.push([
+            result.fullName || 'N/A',
+            result.regNumber || 'N/A',
+            result.department || 'N/A',
+            result.score,
+            result.total,
+            `${percentage}%`,
+            result.year,
+            timestamp.toLocaleString()
+          ]);
 
-          if (confirm("Download complete. Clear all results?")) {
-            const batch = db.batch();
-            snapshot.forEach(doc => batch.delete(doc.ref));
-            await batch.commit();
-            lastVisible = null;
-            isEndReached = false;
-            loadResults(true);
+          if (index % 10 === 0) {
+            updateProgress(10 + Math.round((index / allResults.length) * 80), 'Processing data...');
           }
-        } catch (err) {
-          console.error("Error:", err);
-          alert("An error occurred. See console for details.");
+        });
+
+        updateProgress(95, 'Generating file...');
+        const csvContent = rows.map(row => row.map(field => `"${field.toString().replace(/"/g, '""')}"`).join(',')).join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `quiz_results_${school}_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        updateProgress(100, 'Download complete!');
+        setTimeout(() => {
+          hideProgress();
+          confirmModal.classList.remove('hidden');
+        }, 500);
+
+      } catch (err) {
+        console.error("Error generating CSV:", err);
+        alert("Error generating CSV file: " + err.message);
+        hideProgress();
+      }
+    }
+
+    async function clearAllResults() {
+      try {
+        updateProgress(0, 'Preparing to clear results...');
+        confirmModal.classList.add('hidden');
+
+        // Delete in batches of 500 (Firestore limit)
+        const batchSize = 500;
+        const totalBatches = Math.ceil(allResults.length / batchSize);
+
+        for (let i = 0; i < totalBatches; i++) {
+          const batch = db.batch();
+          const batchStart = i * batchSize;
+          const batchEnd = Math.min((i + 1) * batchSize, allResults.length);
+
+          updateProgress(
+            Math.round((i / totalBatches) * 90),
+            `Clearing batch ${i + 1} of ${totalBatches}...`
+          );
+
+          for (let j = batchStart; j < batchEnd; j++) {
+            batch.delete(allResults[j].ref);
+          }
+
+          await batch.commit();
         }
-      });
+
+        updateProgress(100, 'All results cleared!');
+        setTimeout(() => {
+          hideProgress();
+          loadAllResults(); // Refresh the table
+        }, 1000);
+
+      } catch (err) {
+        console.error("Error clearing results:", err);
+        alert("Error clearing results: " + err.message);
+        hideProgress();
+      }
+    }
+
+    // Event Listeners
+    document.getElementById('downloadClearBtn').addEventListener('click', downloadCSV);
+    cancelClear.addEventListener('click', () => {
+      confirmModal.classList.add('hidden');
+      hideProgress();
     });
+    confirmClear.addEventListener('click', clearAllResults);
+
+    // Load results when page loads
+    document.addEventListener('DOMContentLoaded', loadAllResults);
   </script>
 </body>
 
