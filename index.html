@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Department of Industrial Physics</title>
+    <title>Physics Quiz | Department of Industrial Physics</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link
         href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@300;400;600;700&family=Open+Sans:wght@300;400&display=swap"
@@ -14,11 +14,8 @@
         * {
             user-select: none;
             -webkit-user-select: none;
-            /* Safari */
             -moz-user-select: none;
-            /* Firefox */
             -ms-user-select: none;
-            /* IE10+/Edge */
         }
 
         :root {
@@ -27,6 +24,8 @@
             --accent-color: #64ffda;
             --text-primary: #ccd6f6;
             --text-secondary: #8892b0;
+            --star-color: rgba(255, 255, 255, 0.8);
+            --constellation-line: rgba(100, 255, 218, 0.3);
         }
 
         body {
@@ -73,6 +72,44 @@
             animation: fadeInUp 1s 1s forwards;
         }
 
+        .countdown-container {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 2rem 0;
+            opacity: 0;
+            animation: fadeIn 0.5s 1.5s forwards;
+        }
+
+        .countdown-box {
+            background: rgba(23, 42, 69, 0.7);
+            border-radius: 8px;
+            padding: 1rem;
+            min-width: 80px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .countdown-box:hover {
+            transform: translateY(-5px);
+        }
+
+        .countdown-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            line-height: 1;
+        }
+
+        .countdown-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 0.5rem;
+            color: var(--text-secondary);
+        }
+
         .loading-container {
             width: 100%;
             max-width: 300px;
@@ -99,7 +136,7 @@
             animation: load 8s 1.5s linear forwards;
         }
 
-        .physics-elements {
+        .constellation {
             position: absolute;
             width: 100%;
             height: 100%;
@@ -109,18 +146,32 @@
             overflow: hidden;
         }
 
-        .particle {
+        .star {
             position: absolute;
-            background: rgba(100, 255, 218, 0.1);
+            background: var(--star-color);
             border-radius: 50%;
-            animation: float linear infinite;
+            animation: twinkle 3s infinite alternate;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            will-change: transform, opacity;
         }
 
-        .circuit {
+        .constellation-line {
             position: absolute;
-            stroke: rgba(100, 255, 218, 0.05);
-            fill: none;
-            stroke-width: 1px;
+            height: 1px;
+            background: var(--constellation-line);
+            transform-origin: 0 0;
+            transition: opacity 0.5s ease;
+            will-change: transform, opacity;
+        }
+
+        .physics-symbol {
+            position: absolute;
+            color: rgba(100, 255, 218, 0.3);
+            font-size: 24px;
+            font-weight: bold;
+            opacity: 0;
+            animation: fadeInOut 8s infinite;
+            will-change: transform, opacity;
         }
 
         @keyframes fadeInUp {
@@ -142,11 +193,51 @@
             }
         }
 
+        @keyframes twinkle {
+            0% {
+                opacity: 0.3;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
         @keyframes float {
             to {
                 transform: translateY(-100vh);
                 opacity: 0;
             }
+        }
+
+        @keyframes fadeInOut {
+
+            0%,
+            100% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
         }
 
         @media (max-width: 768px) {
@@ -157,16 +248,41 @@
             .subtitle {
                 font-size: 1.1rem;
             }
+
+            .countdown-box {
+                min-width: 60px;
+                padding: 0.5rem;
+            }
+
+            .countdown-value {
+                font-size: 1.8rem;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="physics-elements" id="physicsCanvas"></div>
+    <div class="constellation" id="constellationCanvas"></div>
 
     <div class="splash-container">
-        <h1 class="title">The Department of</h1>
-        <h2 class="subtitle">Industrial Physics</h2>
+        <h1 class="title">Physics Quiz</h1>
+        <h2 class="subtitle">Department of Industrial Physics</h2>
+        <h2 class="subtitle">The quiz starts by 9AM tomorrow</h2>
+
+        <div class="countdown-container" id="countdown">
+            <div class="countdown-box">
+                <div class="countdown-value" id="hours">00</div>
+                <div class="countdown-label">Hours</div>
+            </div>
+            <div class="countdown-box">
+                <div class="countdown-value" id="minutes">00</div>
+                <div class="countdown-label">Minutes</div>
+            </div>
+            <div class="countdown-box">
+                <div class="countdown-value" id="seconds">00</div>
+                <div class="countdown-label">Seconds</div>
+            </div>
+        </div>
 
         <div class="loading-container">
             <div class="loading-bar">
@@ -176,67 +292,245 @@
     </div>
 
     <script>
-        // background elements
-        function initPhysicsElements() {
-            const container = document.getElementById('physicsCanvas');
-            const colors = ['rgba(100, 255, 218, 0.05)', 'rgba(100, 255, 218, 0.08)', 'rgba(100, 255, 218, 0.12)'];
+        // Constellation animation with dynamic connections
+        class Constellation {
+            constructor(container) {
+                this.container = container;
+                this.width = window.innerWidth;
+                this.height = window.innerHeight;
+                this.stars = [];
+                this.lines = [];
+                this.physicsSymbols = ['α', 'β', 'γ', 'δ', 'ε', 'θ', 'λ', 'μ', 'π', 'σ', 'τ', 'ω', 'Δ', 'Σ', 'Ψ', 'Ω', '∞', '∂', '∫', '∮', '∇'];
+                this.connections = [];
 
-            // Create particles
-            for (let i = 0; i < 30; i++) {
-                const particle = document.createElement('div');
-                particle.classList.add('particle');
+                this.initStars();
+                this.initPhysicsSymbols();
+                this.animateConnections();
 
-                // Random size between 2px and 8px
-                const size = Math.random() * 6 + 2;
-                particle.style.width = `${size}px`;
-                particle.style.height = `${size}px`;
-
-                // Random position
-                particle.style.left = `${Math.random() * 100}vw`;
-                particle.style.top = `${Math.random() * 120}vh`;
-
-                // Random animation duration
-                const duration = Math.random() * 20 + 10;
-                particle.style.animationDuration = `${duration}s`;
-
-                // Random delay
-                particle.style.animationDelay = `${Math.random() * 5}s`;
-
-                // Random color
-                particle.style.background = colors[Math.floor(Math.random() * colors.length)];
-
-                container.appendChild(particle);
+                window.addEventListener('resize', this.handleResize.bind(this));
             }
 
-            // Create circuit-like lines
-            for (let i = 0; i < 5; i++) {
-                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                svg.setAttribute("width", "100%");
-                svg.setAttribute("height", "100%");
-                svg.setAttribute("viewBox", "0 0 1500 15000");
-                svg.classList.add("circuit");
+            handleResize() {
+                this.width = window.innerWidth;
+                this.height = window.innerHeight;
 
-                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                let pathData = `M ${Math.random() * 1500},${Math.random() * 1500} `;
+                // Reposition stars
+                this.stars.forEach(star => {
+                    star.element.style.left = `${star.x / this.width * 100}%`;
+                    star.element.style.top = `${star.y / this.height * 100}%`;
+                });
 
-                // Create random circuit path
-                for (let j = 0; j < 15; j++) {
-                    pathData += `L ${Math.random() * 1500},${Math.random() * 1000} `;
+                // Update existing lines
+                this.updateLines();
+            }
+
+            initStars() {
+                const starCount = Math.floor(this.width * this.height / 1000);
+
+                for (let i = 0; i < starCount; i++) {
+                    const star = document.createElement('div');
+                    star.classList.add('star');
+
+                    // Random size between 1px and 3px
+                    const size = Math.random() * 2 + 1;
+                    star.style.width = `${size}px`;
+                    star.style.height = `${size}px`;
+
+                    // Random position
+                    const x = Math.random() * this.width;
+                    const y = Math.random() * this.height;
+                    star.style.left = `${x / this.width * 100}%`;
+                    star.style.top = `${y / this.height * 100}%`;
+
+                    // Random animation delay
+                    star.style.animationDelay = `${Math.random() * 3}s`;
+
+                    this.container.appendChild(star);
+
+                    // Store star data for connections
+                    this.stars.push({
+                        element: star,
+                        x: x,
+                        y: y,
+                        size: size,
+                        connections: 0
+                    });
+                }
+            }
+
+            initPhysicsSymbols() {
+                for (let i = 0; i < 15; i++) {
+                    const symbol = document.createElement('div');
+                    symbol.classList.add('physics-symbol');
+                    symbol.textContent = this.physicsSymbols[Math.floor(Math.random() * this.physicsSymbols.length)];
+
+                    symbol.style.left = `${Math.random() * 90 + 5}vw`;
+                    symbol.style.top = `${Math.random() * 90 + 5}vh`;
+                    symbol.style.animationDelay = `${Math.random() * 8}s`;
+
+                    this.container.appendChild(symbol);
+                }
+            }
+
+            animateConnections() {
+                // Clear existing lines
+                this.lines.forEach(line => line.element.remove());
+                this.lines = [];
+                this.connections = [];
+
+                // Create new connections
+                const visibleStars = this.stars.filter(() => Math.random() > 0.7);
+
+                for (let i = 0; i < visibleStars.length; i++) {
+                    // Limit connections per star
+                    if (visibleStars[i].connections >= 3) continue;
+
+                    // Find nearest stars to connect to
+                    const nearestStars = this.findNearestStars(visibleStars[i], visibleStars, 3);
+
+                    nearestStars.forEach(neighbor => {
+                        // Don't connect if already connected or would exceed connection limit
+                        if (neighbor.connections >= 3 ||
+                            this.connections.some(c =>
+                                (c.from === visibleStars[i] && c.to === neighbor) ||
+                                (c.from === neighbor && c.to === visibleStars[i]))) {
+                            return;
+                        }
+
+                        this.createConnection(visibleStars[i], neighbor);
+                        visibleStars[i].connections++;
+                        neighbor.connections++;
+                    });
                 }
 
-                path.setAttribute("d", pathData);
-                svg.appendChild(path);
-                container.appendChild(svg);
+                // Schedule next connection animation
+                setTimeout(() => this.animateConnections(), 3000);
+            }
+
+            findNearestStars(star, stars, count) {
+                // Sort stars by distance
+                const sorted = [...stars]
+                    .filter(s => s !== star)
+                    .sort((a, b) => {
+                        const distA = Math.sqrt(Math.pow(a.x - star.x, 2) + Math.pow(a.y - star.y, 2));
+                        const distB = Math.sqrt(Math.pow(b.x - star.x, 2) + Math.pow(b.y - star.y, 2));
+                        return distA - distB;
+                    });
+
+                // Return closest stars (limit by count)
+                return sorted.slice(0, count);
+            }
+
+            createConnection(star1, star2) {
+                const line = document.createElement('div');
+                line.classList.add('constellation-line');
+
+                const x1 = star1.x;
+                const y1 = star1.y;
+                const x2 = star2.x;
+                const y2 = star2.y;
+
+                const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+                const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+
+                line.style.width = `${length}px`;
+                line.style.left = `${x1}px`;
+                line.style.top = `${y1}px`;
+                line.style.transform = `rotate(${angle}deg)`;
+                line.style.opacity = '0';
+
+                this.container.appendChild(line);
+
+                // Store connection
+                this.connections.push({
+                    from: star1,
+                    to: star2,
+                    element: line
+                });
+                this.lines.push(line);
+
+                // Animate line appearance
+                setTimeout(() => {
+                    line.style.opacity = Math.random() * 0.5 + 0.2;
+                    line.style.transition = 'opacity 1s ease';
+                }, 100);
+            }
+
+            updateLines() {
+                this.connections.forEach(connection => {
+                    const { from, to, element } = connection;
+                    const x1 = from.x;
+                    const y1 = from.y;
+                    const x2 = to.x;
+                    const y2 = to.y;
+
+                    const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+                    const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+
+                    element.style.width = `${length}px`;
+                    element.style.left = `${x1}px`;
+                    element.style.top = `${y1}px`;
+                    element.style.transform = `rotate(${angle}deg)`;
+                });
             }
         }
 
-        // Redirect after 10 seconds
-        setTimeout(() => {
-            window.location.href = 'login.html';
-        }, 15000);
+        // Countdown to quiz start (9am tomorrow)
+        function updateCountdown() {
+            const now = new Date();
+            let quizTime = new Date();
+
+            // Set quiz time to 9am tomorrow
+            quizTime.setDate(now.getDate() + 1);
+            quizTime.setHours(9, 0, 0, 0);
+
+            const diff = quizTime - now;
+
+            if (diff <= 0) {
+                // Quiz time has arrived, redirect to login
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Calculate hours, minutes, seconds
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            // Update display
+            document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
+            document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
+            document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
+
+            // Update loading bar progress (for visual effect)
+            const totalHoursUntilQuiz = 24 - now.getHours() + 9;
+            const progressPercent = ((totalHoursUntilQuiz * 60 - (hours * 60 + minutes)) / (totalHoursUntilQuiz * 60)) * 100;
+            document.querySelector('.loading-progress').style.width = `${progressPercent}%`;
+        }
 
         // Initialize
-        window.onload = initPhysicsElements;
+        window.onload = function () {
+            const constellation = new Constellation(document.getElementById('constellationCanvas'));
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+
+            // Add interactive star highlighting
+            document.addEventListener('mousemove', (e) => {
+                constellation.stars.forEach(star => {
+                    const starX = star.x;
+                    const starY = star.y;
+                    const distance = Math.sqrt(Math.pow(e.clientX - starX, 2) + Math.pow(e.clientY - starY, 2));
+
+                    if (distance < 100) {
+                        star.element.style.transform = `scale(${1 + (100 - distance) / 200})`;
+                        star.element.style.opacity = 1;
+                    } else {
+                        star.element.style.transform = 'scale(1)';
+                        star.element.style.opacity = '';
+                    }
+                });
+            });
+        };
     </script>
 </body>
 
