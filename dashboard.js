@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   const reg = localStorage.getItem("regNumber");
-  const userDisplay = document.getElementById("userReg");
+  const name = localStorage.getItem("fullName");
+  const userDisplay = document.getElementById("userName");
   const startBtn = document.getElementById("startQuizBtn");
   const resultBtn = document.getElementById("viewResultBtn");
   const quizStatus = document.getElementById("quizStatus");
@@ -12,8 +13,8 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // Show reg number
-  userDisplay.textContent = reg;
+  // Show name
+  userDisplay.textContent = name;
 
   // Add loading spinner
   startBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Checking status...';

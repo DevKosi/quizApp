@@ -14,8 +14,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-
-
   try {
     const response = await fetch("https://backbone-1.onrender.com/api/quiz");
     if (!response.ok) throw new Error("Failed to fetch quiz");
@@ -25,39 +23,26 @@ document.addEventListener("DOMContentLoaded", async () => {
       throw new Error("No quiz questions found");
     }
 
-    // Randomize questions if URL has random parameter
     if (window.location.search.includes('random')) {
       quizData = [...quizData].sort(() => Math.random() - 0.5);
     }
 
-    // Get number of questions to show from settings
-    //const settingsResponse = await fetch("https://backbone-1.onrender.com/api/quiz-settings");
-    //if (settingsResponse.ok) {
-     // const settings = await settingsResponse.json();
-    //  const questionsToShow = Math.min(settings.questionsToShow || 10, quizData.length);
-   //   quizData = quizData.slice(0, questionsToShow);
-   // }
+    const questionsToShow = 15;
 
-  
-// Hardcoded number of questions to show
-const questionsToShow = 15; // Or any other number
+    function shuffleArray(array) {
+      return array
+        .map(value => ({ value, sort: Math.random() }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(({ value }) => value);
+    }
 
-// Shuffle quizData
-function shuffleArray(array) {
-  return array
-    .map(value => ({ value, sort: Math.random() }))
-    .sort((a, b) => a.sort - b.sort)
-    .map(({ value }) => value);
-}
+    quizData = shuffleArray(quizData).slice(0, Math.min(questionsToShow, quizData.length));
 
-quizData = shuffleArray(quizData).slice(0, Math.min(questionsToShow, quizData.length));
+    let currentIndex = 0;
+    const answers = new Array(quizData.length).fill(null);
+    let timeLeft = 480;
+    let timerInterval;
 
-let currentIndex = 0;
-const answers = new Array(quizData.length).fill(null);
-let timeLeft = 480; //
-let timerInterval;
-
-    // Inject progress bar
     const progressBar = document.createElement("div");
     progressBar.className = "w-full bg-gray-200 rounded-full h-2.5 mb-6";
     progressBar.innerHTML = `
@@ -73,8 +58,6 @@ let timerInterval;
 
     function renderQuestion() {
       const question = quizData[currentIndex];
-
-      // Update progress
       const percent = ((currentIndex + 1) / quizData.length) * 100;
       document.getElementById("progressFill").style.width = `${percent}%`;
 
@@ -121,7 +104,7 @@ let timerInterval;
         timeLeft--;
         updateTimerDisplay();
 
-        if (timeLeft <= 60) { // Last minute warning
+        if (timeLeft <= 60) {
           timerContainer.classList.remove("bg-blue-100", "text-blue-700");
           timerContainer.classList.add("bg-red-100", "text-red-700", "pulse-warning");
         }
@@ -180,16 +163,24 @@ let timerInterval;
       `;
 
       try {
+        const submissionData = {
+          regNumber: reg,
+          score,
+          total,
+          timestamp: new Date().toISOString(),
+          department: localStorage.getItem("department")
+        };
+
+        // Only add fullName if it exists in localStorage
+        const fullName = localStorage.getItem("fullName");
+        if (fullName) {
+          submissionData.fullName = fullName;
+        }
+
         const res = await fetch("https://backbone-1.onrender.com/api/results", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            regNumber: reg,
-            score,
-            total,
-            timestamp: new Date().toISOString(),
-            department: localStorage.getItem("department")
-          })
+          body: JSON.stringify(submissionData)
         });
 
         if (!res.ok) throw new Error("Failed to submit results");
@@ -197,7 +188,7 @@ let timerInterval;
         localStorage.setItem(`quizSubmitted_${reg}`, "true");
         sessionStorage.setItem(`quizCompleted_${reg}`, "true");
         localStorage.setItem("lastSubmissionTime", Date.now());
-        document.cookie = `quizSubmitted_${reg}=true; max-age=${60 * 60 * 24 * 30}`; // 30 days
+        document.cookie = `quizSubmitted_${reg}=true; max-age=${60 * 60 * 24 * 30}`;
 
         quizContainer.innerHTML = `
           <div class="flex flex-col items-center justify-center h-full text-center">
@@ -245,4 +236,3 @@ let timerInterval;
     `;
   }
 });
-

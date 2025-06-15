@@ -58,6 +58,7 @@
       <table class="min-w-full text-sm text-left text-gray-700">
         <thead class="bg-gray-100 text-xs uppercase font-semibold text-gray-600">
           <tr>
+            <th class="px-4 py-3">Name</th>
             <th class="px-4 py-3">Reg Number</th>
             <th class="px-4 py-3">Department</th>
             <th class="px-4 py-3">Score</th>
@@ -137,12 +138,15 @@
           const row = document.createElement('tr');
           row.className = 'table-row';
           row.innerHTML = `
-            <td class="px-4 py-2 font-medium">${data.regNumber || 'N/A'}</td>
-            <td class="px-4 py-2">${data.department || 'N/A'}</td>
-            <td class="px-4 py-2 font-medium">${data.score}</td>
-            <td class="px-4 py-2">${data.total}</td>
-            <td class="px-4 py-2 font-medium ${getPercentageColor(percentage)}">${percentage}%</td>
-            <td class="px-4 py-2">${timestamp.toLocaleString()}</td>
+          
+  
+         <td class="px-4 py-2">${data.fullName || 'N/A'}</td>
+          <td class="px-4 py-2 font-medium">${data.regNumber || 'N/A'}</td>
+  <td class="px-4 py-2">${data.department || 'N/A'}</td>
+  <td class="px-4 py-2 font-medium">${data.score}</td>
+  <td class="px-4 py-2">${data.total}</td>
+  <td class="px-4 py-2 font-medium ${getPercentageColor(percentage)}">${percentage}%</td>
+  <td class="px-4 py-2">${timestamp.toLocaleString()}</td>
           `;
           tableBody.appendChild(row);
         });
@@ -181,12 +185,12 @@
 
           if (snapshot.empty) return alert("No results to download.");
 
-          const rows = [["Reg Number", "Department", "Score", "Total", "Percentage", "Timestamp"]];
+          const rows = [["Name", "Reg Number", "Department", "Score", "Total", "Percentage", "Timestamp"]];
           snapshot.forEach(doc => {
             const d = doc.data();
             const perc = Math.round((d.score / d.total) * 100);
             const time = d.timestamp?.toDate?.() || new Date(d.timestamp || Date.now());
-            rows.push([d.regNumber, d.department, d.score, d.total, `${perc}%`, time.toLocaleString()]);
+            rows.push([d.fullName, d.regNumber || 'N/A', d.department, d.score, d.total, `${perc}%`, time.toLocaleString()]);
           });
 
           const csv = rows.map(r => r.join(",")).join("\n");
@@ -214,5 +218,5 @@
     });
   </script>
 </body>
-</html>
 
+</html>
