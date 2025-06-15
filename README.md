@@ -15,13 +15,8 @@ A simple web quiz app built for the Physics Department at Ebonyi State Universit
 
 - Frontend: HTML, CSS, JavaScript  
 - Backend: Node.js API (hosted separately)  
-- Data Storage: Firebase or MongoDB  
+- Data Storage: Firebase and MongoDB  
 
-## Deployment
-
-- Update backend URL in frontend code before deployment  
-- Host frontend on static site services like Vercel or Netlify  
-- Deploy backend on platforms such as Firebase Functions or Render  
 
 ## Notes
 
