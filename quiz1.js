@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     let currentIndex = 0;
     const answers = new Array(quizData.length).fill(null);
-    let timeLeft = 480;
+    let timeLeft = 300;
     let timerInterval;
 
     const progressBar = document.createElement("div");
