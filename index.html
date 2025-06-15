@@ -475,62 +475,64 @@
             }
         }
 
-        // Countdown to quiz start (9am tomorrow)
-        function updateCountdown() {
-            const now = new Date();
-            let quizTime = new Date();
+        // Countdown to quiz start (9am today or tomorrow if already past 9am)
+    function updateCountdown() {
+        const now = new Date();
+        const today9AM = new Date();
+        
+        // Set to today's 9AM
+        today9AM.setHours(9, 0, 0, 0);
+        
+        // Determine target time (today's 9AM if not passed, otherwise tomorrow's)
+        const quizTime = now < today9AM ? today9AM : new Date(today9AM.getTime() + 86400000);
+        
+        const diff = quizTime - now;
 
-            // Set quiz time to 9am tomorrow
-            quizTime.setDate(now.getDate() + 1);
-            quizTime.setHours(9, 0, 0, 0);
-
-            const diff = quizTime - now;
-
-            if (diff <= 0) {
-                // Quiz time has arrived, redirect to login
-                window.location.href = 'login.html';
-                return;
-            }
-
-            // Calculate hours, minutes, seconds
-            const hours = Math.floor(diff / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-            // Update display
-            document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
-            document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
-            document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
-
-            // Update loading bar progress (for visual effect)
-            const totalHoursUntilQuiz = 24 - now.getHours() + 9;
-            const progressPercent = ((totalHoursUntilQuiz * 60 - (hours * 60 + minutes)) / (totalHoursUntilQuiz * 60)) * 100;
-            document.querySelector('.loading-progress').style.width = `${progressPercent}%`;
+        if (diff <= 0) {
+            // Quiz time has arrived, redirect to login
+            window.location.href = 'login.html';
+            return;
         }
 
-        // Initialize
-        window.onload = function () {
-            const constellation = new Constellation(document.getElementById('constellationCanvas'));
-            updateCountdown();
-            setInterval(updateCountdown, 1000);
+        // Calculate hours, minutes, seconds
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-            // Add interactive star highlighting
-            document.addEventListener('mousemove', (e) => {
-                constellation.stars.forEach(star => {
-                    const starX = star.x;
-                    const starY = star.y;
-                    const distance = Math.sqrt(Math.pow(e.clientX - starX, 2) + Math.pow(e.clientY - starY, 2));
+        // Update display
+        document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
+        document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
+        document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
 
-                    if (distance < 100) {
-                        star.element.style.transform = `scale(${1 + (100 - distance) / 200})`;
-                        star.element.style.opacity = 1;
-                    } else {
-                        star.element.style.transform = 'scale(1)';
-                        star.element.style.opacity = '';
-                    }
-                });
+        // Update loading bar progress (for visual effect)
+        const totalHoursUntilQuiz = (quizTime - today9AM) / (1000 * 60 * 60) + 24;
+        const progressPercent = ((totalHoursUntilQuiz * 60 - (hours * 60 + minutes)) / (totalHoursUntilQuiz * 60)) * 100;
+        document.querySelector('.loading-progress').style.width = `${progressPercent}%`;
+    }
+
+    // Initialize
+    window.onload = function() {
+        const constellation = new Constellation(document.getElementById('constellationCanvas'));
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+
+        // Add interactive star highlighting
+        document.addEventListener('mousemove', (e) => {
+            constellation.stars.forEach(star => {
+                const starX = star.x;
+                const starY = star.y;
+                const distance = Math.sqrt(Math.pow(e.clientX - starX, 2) + Math.pow(e.clientY - starY, 2));
+                
+                if (distance < 100) {
+                    star.element.style.transform = `scale(${1 + (100 - distance) / 200})`;
+                    star.element.style.opacity = 1;
+                } else {
+                    star.element.style.transform = 'scale(1)';
+                    star.element.style.opacity = '';
+                }
             });
-        };
+        });
+    };
     </script>
 </body>
 
